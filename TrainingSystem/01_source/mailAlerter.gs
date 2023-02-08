@@ -10,8 +10,8 @@
 function emailAlert() {
   /* Internal variables */
   var DEBUG = false;
-  var notificationDataColumn = 11;
-  var mailColumn = 12;
+  var notificationDataColumn = 13;
+  var mailColumn = 14;
   var nameColumn = 1;
   var counter = 0;
   var adminMail = 'bva.bmkr@gmail.com'; /* TODO: change to admin mail address */
