@@ -1,0 +1,6 @@
+Evaluatiedatum -> =ARRAYFORMULA(ALS(RIJ(P:P)=1;"Evaluatiedatum";ALS(GELIJK(I:I;"Meerdere dagen");(J:J+K:K);K:K)))
+e-mail formatter -> =ARRAYFORMULA(ALS(RIJ(P:P)=1;"e-mail";B:B&"."&REGEXREPLACE(C:C;" ";"")&"@dewalhoeve.be"))
+Opleidingsduur -> =ARRAYFORMULA(ALS(RIJ(Q:Q)=1;"Opleidingsduur";ALS(GELIJK(I:I;"Halve dag");3,8;ALS(GELIJK(I:I;"Volle dag");7,6;ALS(GELIJK(I:I;"Meerdere dagen");7,6*J:J;0)))))
+Opleidingsprijs -> =ARRAYFORMULA(ALS(RIJ(O:O)=1;"Opleidingsprijs";ALS(GELIJK(F:F;"Gratis");0;F:F)))
+concat -> =ARRAYFORMULA(ALS(RIJ(P:P)=1;"Concat";B:B&REGEXREPLACE(C:C;" ";"")))
+jaar -> =ARRAYFORMULA(ALS(RIJ(P:P)=1;"Jaar";JAAR(A:A)))
