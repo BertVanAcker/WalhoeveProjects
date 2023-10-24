@@ -1,6 +1,8 @@
 import pandas
 import plotly.express as px
 import plotly.graph_objects as go
+from pptx import Presentation
+import plotlyPowerpoint as pp
 
 
 class EvaluationAnalyzer():
@@ -19,6 +21,8 @@ class EvaluationAnalyzer():
             self.importEvaluations(excelSheet=self._inputFile)
         else:
             self._inputFile = ""
+
+        self._currentFigure = None
 
 
     @property
@@ -79,7 +83,7 @@ class EvaluationAnalyzer():
         fig.update_traces(fill='toself')
         if export:
             fig.write_image("output/static/" + title + "_spiderchart.png")
-            fig.write_html("output/dynamic/" + title + "_spiderchart.png")
+            fig.write_html("output/dynamic/" + title + "_spiderchart.html")
         if visualize:
             fig.show()
 
@@ -127,11 +131,12 @@ class EvaluationAnalyzer():
             showlegend=True
         )
         if export:
-            fig.write_image("output/static/comparison.png")
-            fig.write_html("output/dynamic/comparison.html")
+            fig.write_image("output/comparison/comparison.png")
+            fig.write_html("output/comparison/comparison.html")
 
         if visualize:
             fig.show()
+        self._currentFigure = fig
 
     def generateRadarChart(self,title=None,visualize=False,export=True):
         _uniqueTrainingNames = self.trainingList
@@ -183,3 +188,5 @@ class EvaluationAnalyzer():
             scores["expectationScore"] = scores["expectationScore"] / count
 
             self._createBarChart(title=title,inputData=scores,visualize=visualize,export=export)
+
+
