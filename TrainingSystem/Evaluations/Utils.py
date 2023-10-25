@@ -1,9 +1,9 @@
 import pandas
 import plotly.express as px
 import plotly.graph_objects as go
-from pptx import Presentation
-import plotlyPowerpoint as pp
-
+from docx import Document
+from docx.shared import Inches
+import math
 
 class EvaluationAnalyzer():
     """
@@ -59,21 +59,21 @@ class EvaluationAnalyzer():
             location = df['Locatie'].values
             locationRemarks = df['Locatie 2'].values
             duration = df['Duur van de opleiding'].values
-            ldurationRemarks = df['Duur van de opleiding 2'].values
+            durationRemarks = df['Duur van de opleiding 2'].values
             improvement = df['Ik kan mijn job nu beter uitvoeren'].values
-            improvementRemark = df['Ik kan mijn job nu beter uitvoeren 2'].values
+            improvementRemarks = df['Ik kan mijn job nu beter uitvoeren 2'].values
             expectation = df['De opleiding voldeed aan mijn verwachtingen 2'].values
-            expectationRemark = df['De opleiding voldeed aan mijn verwachtingen 3'].values
+            expectationRemarks = df['De opleiding voldeed aan mijn verwachtingen 3'].values
             title = df['Titel opleiding'].values
 
         #generate entries
         for i in range(0,len(submission),1):
-            entries.append({"Date":submission[i].__str__(),"title":title[i],"firstName":firstName[i],"lastName":lastName[i],"topicScore":topic[i],"teacherScore":teacher[i],"locationScore":location[i],"durationScore":duration[i],"improvementScore":improvement[i],"expectationScore":expectation[i]})
+            entries.append({"Date":submission[i].__str__(),"title":title[i],"firstName":firstName[i],"lastName":lastName[i],"topicScore":topic[i],"teacherScore":teacher[i],"locationScore":location[i],"durationScore":duration[i],"improvementScore":improvement[i],"expectationScore":expectation[i],"topicRemarks":topicRemarks[i],"teacherRemarks":teacherRemarks[i],"locationRemarks":locationRemarks[i],"durationRemarks":durationRemarks[i],"improvementRemarks":improvementRemarks[i],"expectationRemarks":expectationRemarks[i]})
 
         self.RAWentries = entries
         return entries
 
-    def _createBarChart(self,title="",inputData=None,visualize=False,export=True):
+    def _createRadarChart(self, title="", inputData=None, visualize=False, export=True):
 
         df = pandas.DataFrame(dict(
             r=[inputData["topicScore"], inputData["teacherScore"], inputData["locationScore"], inputData["improvementScore"],
@@ -82,11 +82,52 @@ class EvaluationAnalyzer():
         fig = px.line_polar(df, r='r', theta='theta', line_close=True)
         fig.update_traces(fill='toself')
         if export:
-            fig.write_image("output/static/" + title + "_spiderchart.png")
-            fig.write_html("output/dynamic/" + title + "_spiderchart.html")
+            fig.write_image("output/static/" + title.replace(" ", "") + "_spiderchart.png")
+            fig.write_html("output/dynamic/" + title.replace(" ", "") + "_spiderchart.html")
         if visualize:
             fig.show()
 
+    def _createBarChart(self, title="", inputData=None, visualize=False, export=True):
+
+        scoreOptions = ['0(Slecht)', '1', '2', '3', '4', '5(Heel goed)']
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=scoreOptions,
+            y=inputData["topicScore"],
+            name='Onderwerp',
+            marker_color='indianred'
+        ))
+        fig.add_trace(go.Bar(
+            x=scoreOptions,
+            y=inputData["teacherScore"],
+            name='Lesgever(s)',
+            marker_color='lightsalmon'
+        ))
+        fig.add_trace(go.Bar(
+            x=scoreOptions,
+            y=inputData["locationScore"],
+            name='Locatie',
+            marker_color='lemonchiffon'
+        ))
+        fig.add_trace(go.Bar(
+            x=scoreOptions,
+            y=inputData["improvementScore"],
+            name='Bruikbaarheid',
+            marker_color='aliceblue'
+        ))
+        fig.add_trace(go.Bar(
+            x=scoreOptions,
+            y=inputData["expectationScore"],
+            name='Verwachting',
+            marker_color='darkturquoise'
+        ))
+
+        if export:
+            fig.write_image("output/static/" + title.replace(" ", "") + "_barchart.png")
+            fig.write_html("output/dynamic/" + title.replace(" ", "") + "_barchart.html")
+        if visualize:
+            fig.show()
     def compareTrainings(self,list=[],visualize=False,export=True):
 
         chartInput = []
@@ -166,7 +207,7 @@ class EvaluationAnalyzer():
                 scores["improvementScore"] = scores["improvementScore"] / count
                 scores["expectationScore"] = scores["expectationScore"] / count
 
-                self._createBarChart(title=training, inputData=scores, visualize=False, export=export)
+                self._createRadarChart(title=training, inputData=scores, visualize=False, export=export)
         else:
             count=0
             scores = {'topicScore': 0.0, 'teacherScore': 0.0, 'locationScore': 0.0, 'durationScore': 0.0,
@@ -187,6 +228,85 @@ class EvaluationAnalyzer():
             scores["improvementScore"] = scores["improvementScore"] / count
             scores["expectationScore"] = scores["expectationScore"] / count
 
-            self._createBarChart(title=title,inputData=scores,visualize=visualize,export=export)
+            self._createRadarChart(title=title, inputData=scores, visualize=visualize, export=export)
+
+    def generateBarChart(self,title=None,visualize=False,export=True):
+        _uniqueTrainingNames = self.trainingList
+
+        if title is None:
+            #TODO: generate the radar charts of all trainings and map them in a single chart
+            x = 10
+        elif title == "ALL":
+            # TODO: generate the radar charts of all trainings in a seperate chart
+            for training in _uniqueTrainingNames:
+                scores = {'topicScore': [0,0,0,0,0,0], 'teacherScore': [0,0,0,0,0,0], 'locationScore': [0,0,0,0,0,0], 'durationScore': [0,0,0,0,0,0],
+                          'improvementScore': [0,0,0,0,0,0], 'expectationScore': [0,0,0,0,0,0]}
+
+                # loop over all entries and check entries for each category mean()
+                for entry in self.RAWentries:
+                    if entry["title"] == training:
+
+                        scores["topicScore"][int(entry["topicScore"])] = scores["topicScore"][int(entry["topicScore"])] + 1
+                        scores["teacherScore"][int(entry["teacherScore"])] = scores["teacherScore"][int(entry["teacherScore"])] + 1
+                        scores["locationScore"][int(entry["locationScore"])] = scores["locationScore"][int(entry["locationScore"])] + 1
+                        scores["durationScore"][int(entry["durationScore"])] = scores["durationScore"][int(entry["durationScore"])] + 1
+                        scores["improvementScore"][int(entry["improvementScore"])] = scores["improvementScore"][int(entry["improvementScore"])] + 1
+                        scores["expectationScore"][int(entry["expectationScore"])] = scores["expectationScore"][int(entry["expectationScore"])] + 1
+
+                self._createBarChart(title=training, inputData=scores, visualize=False, export=export)
+        else:
+            count=0
 
 
+    def generateDocuments(self):
+
+        #generate word document per evaluation
+        for training in self.trainingList:
+            document = Document()
+
+            document.add_heading(training+" overzicht", 0)
+
+            # INSERT SPIDER CHART
+            document.add_heading("Scores per categorie", 1)
+            document.add_picture('output/static/'+training.replace(" ", "")+'_spiderchart.png',width=Inches(6))
+
+            # INSERT BAR CHART
+            document.add_heading("Aantal stemmen per score", 1)
+            document.add_picture('output/static/' + training.replace(" ", "") + '_barchart.png', width=Inches(6))
+
+            # INSERT REMARKS
+            document.add_heading("Opmerkingen", 1)
+            document.add_heading("Onderwerp", 2)
+            for entry in self.RAWentries:
+                if entry["title"] == training:
+                    if not self.isNaN(entry["topicRemarks"]):
+                        document.add_paragraph(entry["topicRemarks"], style='List Bullet')
+
+            document.add_heading("Lesgever(s)", 2)
+            for entry in self.RAWentries:
+                if entry["title"] == training:
+                    if not self.isNaN(entry["teacherRemarks"]):
+                        document.add_paragraph(entry["teacherRemarks"], style='List Bullet')
+
+            document.add_heading("Locatie", 2)
+            for entry in self.RAWentries:
+                if entry["title"] == training:
+                    if not self.isNaN(entry["locationRemarks"]):
+                        document.add_paragraph(entry["locationRemarks"], style='List Bullet')
+
+            document.add_heading("Bruikbaar", 2)
+            for entry in self.RAWentries:
+                if entry["title"] == training:
+                    if not self.isNaN(entry["improvementRemarks"]):
+                        document.add_paragraph(entry["improvementRemarks"], style='List Bullet')
+
+            document.add_heading("Verwachting", 2)
+            for entry in self.RAWentries:
+                if entry["title"] == training:
+                    if not self.isNaN(entry["expectationRemarks"]):
+                        document.add_paragraph(entry["expectationRemarks"], style='List Bullet')
+
+            document.save('output/documents/'+training.replace(" ", "")+'.docx')
+
+    def isNaN(self,num):
+        return num != num

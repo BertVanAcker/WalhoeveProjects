@@ -14,6 +14,9 @@ analyzer = EvaluationAnalyzer(excelSheet="input/Evaluations_24_10_2023.xlsx")
 
 # --- generate all radar charts ---
 analyzer.generateRadarChart(title="ALL",export=True)
+# --- generate all bar charts ---
+
+analyzer.generateBarChart(title="ALL",export=True)
 
 # --- map different trainings on single chart
 trainings = ["Intervisie crosslink Veurne","vertrouwenspersoon","Workshop Wildplukken"]
@@ -22,5 +25,8 @@ trainings = ["Intervisie crosslink Veurne","vertrouwenspersoon","Workshop Wildpl
 # --- compare all trainings ---
 trainings = analyzer.trainingList
 analyzer.compareTrainings(trainings,visualize=True,export=True)
+
+# --- generate all word documents ---
+analyzer.generateDocuments()
 
 
