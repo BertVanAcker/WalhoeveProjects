@@ -1,6 +1,6 @@
 from Evaluations.Utils import *
 
-analyzer = EvaluationAnalyzer(excelSheet="input/Evaluations_24_10_2023.xlsx")
+analyzer = EvaluationAnalyzer(excelSheet="input/Evaluations_13_12_2023.xlsx")
 
 # --- get RAW entries ---
 #entries = analyzer.RAWentries
