@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from docx import Document
 from docx.shared import Inches
 import math
+import numpy as np
 
 class EvaluationAnalyzer():
     """
@@ -108,13 +109,13 @@ class EvaluationAnalyzer():
             x=scoreOptions,
             y=inputData["locationScore"],
             name='Locatie',
-            marker_color='lemonchiffon'
+            marker_color='limegreen'
         ))
         fig.add_trace(go.Bar(
             x=scoreOptions,
             y=inputData["improvementScore"],
             name='Bruikbaarheid',
-            marker_color='aliceblue'
+            marker_color='darkviolet'
         ))
         fig.add_trace(go.Bar(
             x=scoreOptions,
@@ -310,3 +311,109 @@ class EvaluationAnalyzer():
 
     def isNaN(self,num):
         return num != num
+
+
+class RiskAnalyzer():
+    """
+            Module: Class representing an importer module
+             :param string Name: Name of the User
+             :param string Role: Role of the User
+        """
+
+    def __init__(self, Name="",excelSheet=None):
+        self.Name = Name
+        self.RAWentries = []
+        self.ANALYZEDentries = []
+        self.RAWages = []
+        self.ANALYZEDages = [0, 0, 0]
+
+        if excelSheet is not None:
+            self._inputFile = excelSheet
+            self._importRiskAnalysis(excelSheet=self._inputFile)
+        else:
+            self._inputFile = ""
+
+        self.answerOptions = ['Niet van toepassing','Helemaal niet akkoord','Niet akkoord','Akkoord','Helemaal akkoord']
+        self.ageOptions = ['18 tem 30 jaar', '31 tem 44 jaar', '45+']
+
+
+    def _importRiskAnalysis(self,excelSheet=None,googleSheet=None):
+        questionList = []
+        if excelSheet is not None:
+            df = pandas.read_excel(excelSheet)
+            # FETCH QUESTIONS
+            for i in range(2,df.columns.values.shape[0]-1,1):
+                question = []
+                question.append(df.columns.values[i])
+                for j in range(0,df.values.shape[0],1):
+                    question.append(df.values[j][i])
+
+                questionList.append(question)
+
+            # FETCH AGES
+            for i in range(0,df.values.shape[0],1):
+                self.RAWages.append(df.values[i][1])
+
+        self.RAWentries = questionList
+        return questionList
+
+    def _analyzeQuestions(self):
+
+        for answer in self.RAWentries:
+            # DETERMINE PERCENTAGE PER ANSWER
+            answerCount = [0, 0, 0, 0, 0]
+            for i in range(1,len(answer),1):
+                for j in range(0,len(self.answerOptions),1):
+                    if answer[i] == self.answerOptions[j]:
+                        answerCount[j] = answerCount[j]+1
+
+            #name = answer[0].split(") ")[1]
+            self.ANALYZEDentries.append([answer[0],answerCount])
+
+
+        for i in range(0,len(self.RAWages),1):
+            for j in range(0, len(self.ageOptions), 1):
+                if self.RAWages[i] == self.ageOptions[j]:
+                    self.ANALYZEDages[j] = self.ANALYZEDages[j] + 1
+
+
+    def func(self,pct, allvalues):
+        absolute = int(pct / 100. * np.sum(allvalues))
+        return "{:.1f}%\n({:d} g)".format(pct, absolute)
+
+    def _createPieChart(self,title=None,inputData=None,labels=None,visualize=False,export=True):
+
+        #fig = px.pie(values=inputData, names=self.answerOptions,sort=True)
+        fig = go.Figure(data=go.Pie(values=inputData,labels=labels,direction ='clockwise',sort=False,hole = 0.3,))
+        fig.update_traces(marker=dict(colors=["#D37676","#EBC49F","#F1EF99","#B0C5A4","#A4C1C5"]),texttemplate="%{percent} <br>(%{value})" )
+
+        if export:
+            fig.write_image("output/static/" + title.replace(" ", "") + "_piechart.png")
+        if visualize:
+            fig.show()
+    def createAllPieCharts(self):
+
+        for i in range(0,len(self.ANALYZEDentries),1):
+            self._createPieChart(title="Question_"+(i+1).__str__(), visualize=False,labels=self.answerOptions, export=True, inputData=self.ANALYZEDentries[i][1])
+
+        #generate age chart
+        self._createPieChart(title="Ages", visualize=False, labels=self.ageOptions,export=True, inputData=self.ANALYZEDages)
+
+    def generateDocument(self):
+
+
+        #generate word document for the risk analysis
+        document = Document()
+
+        document.add_heading("Resultaten psychosociale risicoanalyse", 0)
+
+        document.add_heading("1) Leeftijdscategorieën", 1)
+        document.add_picture('output/static/Ages_piechart.png', width=Inches(6))
+
+        for i in range(0,len(self.ANALYZEDentries),1):
+            document.add_heading(self.ANALYZEDentries[i][0], 1)
+            document.add_picture('output/static/Question_'+(i+1).__str__()+'_piechart.png',width=Inches(6))
+
+
+
+            document.save('output/ResultatenPsychosocialeRisicoanalyse.docx')
